@@ -152,6 +152,9 @@ class Task
 public:
 	virtual Any Run() = 0;
 protected:
+	void SetResult(Result *ptr) {
+		res_ = ptr;
+	}
 	// 线程中真正调用的是这个函数
 	void ThreadRun()
 	{

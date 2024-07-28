@@ -61,11 +61,9 @@ void Thread::Start()
 //----------------------------------------------------------------
 ThreadPool::ThreadPool()
 {
-
 }
 ThreadPool::~ThreadPool()
 {
-
 }
 // 设置当前任务 模式
 void ThreadPool::SetMode(ThreadType mode)
@@ -113,9 +111,7 @@ void ThreadPool::Start(size_t size)
 
 // 停止线程池
 void ThreadPool::Stop()
-{
-
-}
+{}
 
 // 设置任务最大数量
 void ThreadPool::SetTaskMaxValue(size_t value)

@@ -34,32 +34,32 @@ void CreateHtml::AddHtml(const std::string& html) {
 }
 
 void CreateHtml::Send(const std::string& smtp_server, int port, const std::string& from, const std::string& username, const std::string& password) {
-	int socket = create_socket(smtp_server, port);
+	int socket = CreateSocket(smtp_server, port);
 
-	std::cout << receive_data(socket);
+	std::cout << ReceiveData(socket);
 
-	send_data(socket, "HELO " + smtp_server + "\r\n");
-	std::cout << receive_data(socket);
+	SendData(socket, "HELO " + smtp_server + "\r\n");
+	std::cout << ReceiveData(socket);
 
-	send_data(socket, "AUTH LOGIN\r\n");
-	std::cout << receive_data(socket);
+	SendData(socket, "AUTH LOGIN\r\n");
+	std::cout << ReceiveData(socket);
 
-	send_data(socket, base64_encode(username) + "\r\n");
-	std::cout << receive_data(socket);
+	SendData(socket, Base64Encode(username) + "\r\n");
+	std::cout << ReceiveData(socket);
 
-	send_data(socket, base64_encode(password) + "\r\n");
-	std::cout << receive_data(socket);
+	SendData(socket, Base64Encode(password) + "\r\n");
+	std::cout << ReceiveData(socket);
 
-	send_data(socket, "MAIL FROM:<" + from + ">\r\n");
-	std::cout << receive_data(socket);
+	SendData(socket, "MAIL FROM:<" + from + ">\r\n");
+	std::cout << ReceiveData(socket);
 
 	for (const auto& contact : contacts_) {
-		send_data(socket, "RCPT TO:<" + contact + ">\r\n");
-		std::cout << receive_data(socket);
+		SendData(socket, "RCPT TO:<" + contact + ">\r\n");
+		std::cout << ReceiveData(socket);
 	}
 
-	send_data(socket, "DATA\r\n");
-	std::cout << receive_data(socket);
+	SendData(socket, "DATA\r\n");
+	std::cout << ReceiveData(socket);
 
 	std::string data = "From: " + from + "\r\n";
 	data += "To: " + contacts_[0];
@@ -70,11 +70,11 @@ void CreateHtml::Send(const std::string& smtp_server, int port, const std::strin
 	data += "Content-Type: text/html\r\n";
 	data += "\r\n" + html_ + "\r\n.\r\n";
 
-	send_data(socket, data);
-	std::cout << receive_data(socket);
+	SendData(socket, data);
+	std::cout << ReceiveData(socket);
 
-	send_data(socket, "QUIT\r\n");
-	std::cout << receive_data(socket);
+	SendData(socket, "QUIT\r\n");
+	std::cout << ReceiveData(socket);
 
 #ifdef _WIN32
 	closesocket(socket);
@@ -83,7 +83,7 @@ void CreateHtml::Send(const std::string& smtp_server, int port, const std::strin
 #endif
 }
 
-int CreateHtml::create_socket(const std::string& server, int port) {
+int CreateHtml::CreateSocket(const std::string& server, int port) {
 	struct addrinfo hints, *res;
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_UNSPEC;
@@ -123,11 +123,11 @@ int CreateHtml::create_socket(const std::string& server, int port) {
 	return sock;
 }
 
-void CreateHtml::send_data(int socket, const std::string& data) {
+void CreateHtml::SendData(int socket, const std::string& data) {
 	send(socket, data.c_str(), data.size(), 0);
 }
 
-std::string CreateHtml::receive_data(int socket) {
+std::string CreateHtml::ReceiveData(int socket) {
 	char buffer[1024];
 	int length = recv(socket, buffer, sizeof(buffer) - 1, 0);
 	if (length < 0) {
@@ -138,7 +138,7 @@ std::string CreateHtml::receive_data(int socket) {
 	return std::string(buffer);
 }
 
-std::string CreateHtml::base64_encode(const std::string& data) {
+std::string CreateHtml::Base64Encode(const std::string& data) {
 	static const char* base64_chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 	std::string result;
 	int val = 0, valb = -6;

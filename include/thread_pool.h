@@ -55,7 +55,7 @@ public:
 	template<typename T>
 	T Cast()
 	{
-		Dervir<T> *dir = dynamic_cast< Dervir< T >>(basePtr_.get());
+		Dervir< T > *dir = dynamic_cast< Dervir< T >* >(basePtr_.get());
 		if (dir == nullptr) {
 			throw "basePtr_ dynamic_cast to Dervir is fail!";
 		}

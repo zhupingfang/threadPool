@@ -26,9 +26,9 @@ private:
 	std::vector<std::string> contacts_;
 	std::string html_;
 
-	int create_socket(const std::string& server, int port);
-	void send_data(int socket, const std::string& data);
-	std::string receive_data(int socket);
-	std::string base64_encode(const std::string& data);
+	int CreateSocket(const std::string& server, int port);
+	void SendData(int socket, const std::string& data);
+	std::string ReceiveData(int socket);
+	std::string Base64Encode(const std::string& data);
 };
 #endif //CREAT_HTML_H

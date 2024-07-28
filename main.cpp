@@ -16,33 +16,31 @@ public:
 		return  ThreadPool::Any(99);
 	}
 };
-/*
- *  test:
- *  	ThreadPool::ThreadPool pool;
+
+
+void ThreadPools()
+{
+	ThreadPool::ThreadPool pool;
+	// 启动10 个线程
 	pool.Start(10);
- */
+	DickTask disk;
+	ThreadPool::Result result = pool.SubmitTask(std::make_unique<DickTask>());
+	int ret = result.Get().Cast<int>();
+	std::cout << " ret is"  << ret;
+}
 
-
-int main() {
-
-//	ThreadPool::ThreadPool pool;
-//	pool.Start(10);
-//	DickTask disk;
-//	pool.SubmitTask(std::make_unique<DickTask>());
-//
-//	getchar();
-
+void SendHtml()
+{
 //	CreateHtml email;
 //	email.AddContacts({"recipient1@example.com", "recipient2@example.com"});
 //	email.AddHtml("<html><body><h1>Hello, World!</h1></body></html>");
 //	email.Send("smtp.example.com", 587, "your_email@example.com", "your_email@example.com", "your_password");
+}
 
+int main() {
 
-	CreateHtml email;
-	email.AddContacts({"2777890989@qq.com", "2777890989@qq.com"});
-	email.AddHtml("<html><body><h1>Hello, World!</h1></body></html>");
-	email.Send("smtp.qq.com", 587, "2777890989@qq.com", "2777890989@qq.com", "zeqsfvmmvpwbdgfg");
-
-
+	ThreadPools();
+	getchar();
+	SendHtml();
 	return 0;
 }

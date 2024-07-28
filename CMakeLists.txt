@@ -3,6 +3,11 @@ project(thread)
 
 set(CMAKE_CXX_STANDARD 20)
 
+# 发送邮件需要使用的库 ws2_32
+if(WIN32)
+    set(ADDITIONAL_LIBS ws2_32)
+endif()
+
 # 将源文件 都用一个变量包含
 aux_source_directory(${CMAKE_SOURCE_DIR}/src SRC)
 
@@ -18,3 +23,6 @@ link_directories(${CMAKE_SOURCE_DIR}/lib)
 link_libraries(threadPool)
 
 add_executable(thread main.cpp)
+
+# 链接win库 发送邮件需要使用
+target_link_libraries(thread ${ADDITIONAL_LIBS})

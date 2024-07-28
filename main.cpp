@@ -1,6 +1,6 @@
 #include <iostream>
 #include "thread_pool.h"
-
+#include "creat_html.h"
 #include <thread>
 #include <chrono>
 
@@ -25,17 +25,24 @@ public:
 
 int main() {
 
-//	std::shared_ptr<Base<int> > task;
-//	task = new Base(1234);
 //	ThreadPool::ThreadPool pool;
 //	pool.Start(10);
 //	DickTask disk;
-//	std::shared_ptr < ThreadPool::Task > task;
-//	pool.SubmitTask(task);
+//	pool.SubmitTask(std::make_unique<DickTask>());
 //
-//	std::this_thread::sleep_for(std::chrono::seconds(5));
-//
-//	//
 //	getchar();
+
+//	CreateHtml email;
+//	email.AddContacts({"recipient1@example.com", "recipient2@example.com"});
+//	email.AddHtml("<html><body><h1>Hello, World!</h1></body></html>");
+//	email.Send("smtp.example.com", 587, "your_email@example.com", "your_email@example.com", "your_password");
+
+
+	CreateHtml email;
+	email.AddContacts({"2777890989@qq.com", "2777890989@qq.com"});
+	email.AddHtml("<html><body><h1>Hello, World!</h1></body></html>");
+	email.Send("smtp.qq.com", 587, "2777890989@qq.com", "2777890989@qq.com", "zeqsfvmmvpwbdgfg");
+
+
 	return 0;
 }

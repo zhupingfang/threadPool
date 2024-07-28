@@ -1,5 +1,5 @@
 //
-// Created by zhupi on 2024/7/21.
+// Created by 巴尔悍匪  on 2024/7/21.
 //
 
 #include "thread_pool.h"
@@ -13,7 +13,33 @@ namespace ThreadPool
 //----------------------------------------------------------------
 //----------------------------------------------------------------
 
-Thread::Thread(Thread::ThreadFunc func) :func_(func)
+Result::Result(std::shared_ptr< Task > task, bool isValid)
+	: task_(task), isAviable_(isValid)
+{
+		task_->SetResult(this);
+}
+
+Any Result::Get()
+{
+	if (!isAviable_)
+	{
+		return "";
+	}
+	sem_.Wait();
+	return std::move(any_);
+}
+void Result::SetValue(Any && data)
+{
+	this->any_ = std::move(data);
+	sem_.Push();
+}
+
+//----------------------------------------------------------------
+//----------------------------------------------------------------
+//----------------------------------------------------------------
+
+Thread::Thread(Thread::ThreadFunc func)
+	: func_(func)
 {}
 //Thread::Thread(const Thread::ThreadFunc &func)
 //	: func_(func)
@@ -58,8 +84,8 @@ Result ThreadPool::SubmitTask(std::shared_ptr< Task > task)
 	bool ret = notFull_.wait_for(lock, std::chrono::seconds(1), [&]()->bool {return taskQue_.size() < taskMaxSize_;}); // 等待一秒
 	if (!ret) {
 
-		// error
-		return Result(task);
+		// error 这里拿到 result， 获取数据的时候，不应该阻塞，应该直接返回
+		return Result(task, false);
 	}
 //	notFull_.wait_until(lock, )
 
@@ -68,7 +94,7 @@ Result ThreadPool::SubmitTask(std::shared_ptr< Task > task)
 	taskMaxSize_++;
 	// 通知线程有任务来了
 	notFull_.notify_one();
-	return Result(task);
+	return Result(task, true);
 //	notFull_.notify_all();
 }
 
@@ -121,7 +147,7 @@ void ThreadPool::ThreadFunc()
 		}
 		//  执行任务
 		if ( funcPtr != nullptr) {
-			funcPtr->Run();
+			funcPtr->ThreadRun();
 		}
 	}
 }

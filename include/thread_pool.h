@@ -1,5 +1,5 @@
 //
-// Created by zhupi on 2024/7/21.
+// Created by 巴尔悍匪 on 2024/7/21.
 //
 
 #ifndef THREAD_POOL_H
@@ -117,23 +117,11 @@ class Task;
 class Result
 {
 public:
-	Result (std::shared_ptr< Task > &task) : task_(task)
-	{
-	}
-	Any Get()
-	{
-		if (!isAviable_)
-		{
-			return "";
-		}
-		sem_.Wait();
-		return std::move(any_);
-	}
-	void SetValue(Any && data)
-	{
-		this->any_ = std::move(data);
-		sem_.Push();
-	}
+	Result(std::shared_ptr< Task > task, bool isValid);
+	// 开放给用户的
+	Any Get();
+	// 放开给 线程使用， 记录返回值
+	void SetValue(Any && data);
 private:
 	Any any_;                        // 存储的返回值
 	Semaphore sem_ {0};         // 信号量
@@ -150,19 +138,22 @@ enum class ThreadType {
 class Task
 {
 public:
+	Task()
+	{}
 	virtual Any Run() = 0;
-protected:
 	void SetResult(Result *ptr) {
 		res_ = ptr;
 	}
-	// 线程中真正调用的是这个函数
+	// 线程中真正调用的是这个函数，为啥不直接调用Run方法，为了将返回值进行设置
 	void ThreadRun()
 	{
-		res_->SetValue(std::move(this->Run()));
+		if (res_ != nullptr) {
+			res_->SetValue(std::move(this->Run()));
+		}
 	}
 
 private:
-	Result *res_ {nullptr};  // Result的声明周期是长于Task的
+	Result *res_ {nullptr};  // Result的声明周期是长于Task的,在将任务放入任务队列的时候，先将这里赋值为它对应的返回值对象
 };
 
 // 线程
@@ -180,6 +171,7 @@ private:
 	ThreadFunc func_;
 };
 
+// 线程池主题结构
 class ThreadPool
 {
 	friend Thread;
@@ -203,13 +195,13 @@ private:
 	void ThreadFunc();
 private:
 	std::vector< std::unique_ptr<Thread> > threadVec_ {};    // 线程容器
-	std::queue<std::shared_ptr<Task>> taskQue_ {}; // 任务队列
-	std::atomic_int taskSize_ {0};              // 任务数量
+	std::queue<std::shared_ptr<Task>> taskQue_ {};           // 任务队列
+	std::atomic_int taskSize_ {0};                        // 任务数量
 
-	size_t taskMaxSize_ {1024};                      // 任务队列默认最大值
-	size_t threadSize_ {4};                        // 线程数量
+	size_t taskMaxSize_ {1024};                             // 任务队列默认最大值
+	size_t threadSize_ {4};                                 // 线程数量
 
-	std::mutex threadMutex_ {};                         // 线程锁
+	std::mutex threadMutex_ {};                             // 线程锁
 	std::condition_variable notFull_;
 	std::condition_variable notEmpty_;
 	ThreadType threadMode_ {ThreadType::THREAD_FIXED};  //线程池的类型

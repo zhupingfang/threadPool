@@ -47,7 +47,7 @@ void ThreadPool::SetMode(ThreadType mode)
 	threadMode_ = mode;
 }
 // 提交任务
-void ThreadPool::SubmitTask(std::shared_ptr< Task > task)
+Result ThreadPool::SubmitTask(std::shared_ptr< Task > task)
 {
 	// 获取锁
 	std::unique_lock<std::mutex > lock(threadMutex_);
@@ -57,8 +57,9 @@ void ThreadPool::SubmitTask(std::shared_ptr< Task > task)
 //	notFull_.wait(lock,[&]()->bool {return taskQue_.size() < taskMaxSize_;}); 	// 会卡死
 	bool ret = notFull_.wait_for(lock, std::chrono::seconds(1), [&]()->bool {return taskQue_.size() < taskMaxSize_;}); // 等待一秒
 	if (!ret) {
+
 		// error
-		return;
+		return Result(task);
 	}
 //	notFull_.wait_until(lock, )
 
@@ -67,6 +68,7 @@ void ThreadPool::SubmitTask(std::shared_ptr< Task > task)
 	taskMaxSize_++;
 	// 通知线程有任务来了
 	notFull_.notify_one();
+	return Result(task);
 //	notFull_.notify_all();
 }
 

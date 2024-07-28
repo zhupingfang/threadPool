@@ -16,17 +16,153 @@
 namespace ThreadPool
 {
 
+// 想简化关于存储任意类型的实现
+template < typename T >
+class Base {
+public:
+	Base(T data) = delete;
+	Base(T && data) :data_(data)
+	{}
+	Base & operator=(const Base & ba) = default;
+	Base(T & data) : data_(data)
+	{
+	}
+private:
+	T data_ {};
+};
+
+// 实现一个 any 类型，可以储存任何数据 c17已经实现
+class Any
+{
+public:
+	Any() = default;
+	~Any() = default;
+	Any(Any &&) = default;
+	Any &operator=(Any &&) = default;
+
+	Any(const Any &) = delete;
+	Any &operator=(const Any &) = delete;
+
+	template < typename T >
+	Any (T data) : basePtr_(std::make_unique< Dervir< T >>(data))
+	{}
+//
+//	template < typename T >
+//	Any (T &data) : basePtr_(std::make_unique< Dervir< T >>(data))
+//	{}
+
+	// 得到数据
+	template<typename T>
+	T Cast()
+	{
+		Dervir<T> *dir = dynamic_cast< Dervir< T >>(basePtr_.get());
+		if (dir == nullptr) {
+			throw "basePtr_ dynamic_cast to Dervir is fail!";
+		}
+		return dir->data_;
+	}
+private:
+	// 基类对象
+	class BaseDataPtr
+	{
+	public:
+		virtual ~BaseDataPtr() = default;
+	};
+
+	// 子类实现
+	template<typename T>
+	class Dervir : public BaseDataPtr
+	{
+	public:
+		Dervir(T &data) : data_(data)
+		{}
+		T data_;
+	};
+
+private:
+	// 父类指针的成员变量
+	std::unique_ptr< BaseDataPtr > basePtr_ {nullptr};
+};
+
+// 实现一个简单的信号量， c20已经实现
+class Semaphore
+{
+public:
+	explicit Semaphore(size_t size) : number_ (size)
+	{}
+
+	// 获取一个信号量
+	void Wait()
+	{
+		std::unique_lock lock(mutex_);
+		cond_.wait(lock, [&] ()->bool {return number_ > 0; });
+		number_--;
+	}
+	// 增加一个信号量
+	void Push()
+	{
+		std::unique_lock lock(mutex_);
+		number_++;
+		cond_.notify_all();
+	}
+private:
+	size_t number_ {0};
+	std::mutex mutex_;
+	std::condition_variable cond_ {};
+};
+
+// 声明类型
+class Task;
+// 实现一个线程执行完毕后的返回值
+class Result
+{
+public:
+	Result (std::shared_ptr< Task > &task) : task_(task)
+	{
+	}
+	Any Get()
+	{
+		if (!isAviable_)
+		{
+			return "";
+		}
+		sem_.Wait();
+		return std::move(any_);
+	}
+	void SetValue(Any && data)
+	{
+		this->any_ = std::move(data);
+		sem_.Push();
+	}
+private:
+	Any any_;                        // 存储的返回值
+	Semaphore sem_ {0};         // 信号量
+	std::shared_ptr< Task > task_;   // 存储任务的指针
+	bool isAviable_ {false};         // 返回值是否可用
+};
+// ---------------------------------------------------------------------------
 enum class ThreadType {
 	THREAD_FIXED,
 	THREAD_CACHED
 };
 
+// 任务
 class Task
 {
 public:
-	virtual void Run() = 0;
+	virtual Any Run() = 0;
+protected:
+	// 线程中真正调用的是这个函数
+	void ThreadRun()
+	{
+		res_->SetValue(std::move(this->Run()));
+	}
+
+private:
+	Result *res_ {nullptr};
 };
 
+// 线程
 class Thread
 {
 public:
@@ -50,7 +186,7 @@ public:
 	// 设置当前任务 模式
 	void SetMode(ThreadType mode);
 	// 提交任务
-	void SubmitTask(std::shared_ptr< Task > task);
+	Result SubmitTask(std::shared_ptr< Task > task);
 	// 开启任务
 	void Start(size_t size = 4);
 	// 停止线程池

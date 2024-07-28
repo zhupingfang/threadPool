@@ -159,7 +159,7 @@ protected:
 	}
 
 private:
-	Result *res_ {nullptr};
+	Result *res_ {nullptr};  // Result的声明周期是长于Task的
 };
 
 // 线程
